@@ -1,0 +1,99 @@
+
+<#
+.SYNOPSIS
+    
+.NOTES
+    Author: Eryniox
+    Date:   June 2025
+.LINK
+    https://github.com/EryServers/
+#>
+
+#region Classes
+class EryISOTime {
+  static [string] ms() { Return ( [EryISOTime]::Milliseconds() ) }
+  static [string] Milliseconds() {
+    Return ( ([datetime]::Now).ToString("yyyy-MM-ddTHH:mm:ss.fff", [System.Globalization.CultureInfo]::InvariantCulture) )
+  }
+  static [string] sec() { Return ( [EryISOTime]::Seconds() ) }
+  static [string] Seconds() {
+    Return ( ([datetime]::Now).ToString("yyyy-MM-ddTHH:mm:ss", [System.Globalization.CultureInfo]::InvariantCulture) )
+  }
+  static [string] min() { Return ( [EryISOTime]::Minutes() ) }
+  static [string] Minute() {
+    Return ( ([datetime]::Now).ToString("yyyy-MM-ddTHH:mm", [System.Globalization.CultureInfo]::InvariantCulture) )
+  }
+  static [string] Date() {
+    Return ( ([datetime]::Now).ToString("yyyy-MM-dd", [System.Globalization.CultureInfo]::InvariantCulture) )
+  }
+} # [EryISOTime]::ms() ; [EryISOTime]::Milliseconds(); [EryISOTime]::sec(); [EryISOTime]::Date()
+
+class EryLog {
+  # Properties
+  [array] $MessageArray = @()
+  [string] $LogStart = [EryISOTime]::ms()
+  [hashtable] $Tables = @{}
+  [bool] $AddTimeStamp = $true
+
+  # Hidden Property-methods
+  hidden $__class_init__ = $(
+    # Add any hidden properties or methods here if needed
+    $this | Add-Member -MemberType ScriptProperty -Name 'Message' -Value { # get
+        return ( $this.GetMessage() )
+      } -SecondValue { param ( $arg )
+        $this.AddMessage($arg)
+      } # set
+  )
+  
+  # Methods
+  [void] AddMessage([string]$message) {
+    if ($this.AddTimeStamp) { $message = [EryISOTime]::ms() + " - " + $message }
+    $this.MessageArray += $message
+  }
+  [string] GetMessage() {
+      return ($this.MessageArray -join "`r`n")
+  }
+  [void] AddFailedMessage([string]$message)   { $this.AddMessage("❌ - " + $message) }
+  [void] AddSuccessMessage([string]$message)  { $this.AddMessage("✅ - " + $message) }
+
+} # $Logging = [EryLog]::new(); $Logging.AddMessage("Test message"); $Logging.Message
+
+#endregion Classes
+
+Function New-EryLog {
+  <#
+  .SYNOPSIS
+      Creates a new EryLog object for logging messages with timestamps.
+  .OUTPUTS
+      EryLog
+  .EXAMPLE
+      $log = New-EryLog
+      $log.AddMessage("This is a log message.")
+  #>
+  Param ()
+  Return [EryLog]::new()
+}
+
+Function Get-EryISOTime {
+  <#
+  .SYNOPSIS
+    Provides current date and time in ISO 8601 format.
+  .OUTPUTS
+    string
+  .EXAMPLE
+    $currentTime = Get-EryISOTime -Format "ms"
+  #>
+  Param (
+    [ValidateSet("ms", "sec", "min", "Date", "Milliseconds", "Seconds", "Minute", IgnoreCase=$true)]
+    [string]$Format = "sec"
+  )
+  Switch ($Format) {
+    "ms"   { Return [EryISOTime]::Milliseconds() }
+    "sec"  { Return [EryISOTime]::Seconds() }
+    "min"  { Return [EryISOTime]::Minute() }
+    "Date" { Return [EryISOTime]::Date() }
+    "Milliseconds" { Return [EryISOTime]::Milliseconds() }
+    "Seconds"      { Return [EryISOTime]::Seconds() }
+    "Minute"       { Return [EryISOTime]::Minute() }
+  }
+}
