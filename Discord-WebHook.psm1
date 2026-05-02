@@ -16,6 +16,10 @@ class DiscordStringReturn {
         $text = $text -replace "✅", ":white_check_mark:"
         $text = $text -replace "⚠️", ":warning:"
         $text = $text -replace "ℹ️", ":information_source:"
+        $text = [DiscordStringReturn]::EscapeBackslash($text)
+        return $text
+    }
+    static [string] EscapeBackslash([string]$text) {
         $text = $text -replace "(?m)^\\\\", "\\\\"
         $text = $text -replace " \\\\", " \\\\"
         return $text
@@ -68,8 +72,8 @@ class DiscordEmbedField {
     # Methods
     [hashtable] ToHashtable() {
         return @{
-            name  = $this.name
-            value = $this.value
+            name   = [DiscordStringReturn]::EscapeBackslash($this.name)
+            value  = [DiscordStringReturn]::EscapeBackslash($this.value)
             inline = $this.inline
         }
     }
@@ -174,11 +178,11 @@ class DiscordEmbed {
     [hashtable] ToHashtable() {
         $this.TruncateFooterAuthor()
         $embedHashtable = @{}
-        if ($this.title) { $embedHashtable.title = $this.title }
-        if ($this.description) { $embedHashtable.description = $this.description }
+        if ($this.title) { $embedHashtable.title = [DiscordStringReturn]::EscapeBackslash($this.title) }
+        if ($this.description) { $embedHashtable.description = [DiscordStringReturn]::EscapeBackslash($this.description) }
         if ($this.color) { $embedHashtable.color = $this.color }
-        if ($this.footer.text) { $embedHashtable.footer = $this.footer }
-        if ($this.author.name) { $embedHashtable.author = $this.author }
+        if ($this.footer.text) { $embedHashtable.footer = @{ text = [DiscordStringReturn]::EscapeBackslash($this.footer.text) } }
+        if ($this.author.name) { $embedHashtable.author = @{ name = [DiscordStringReturn]::EscapeBackslash($this.author.name) } }
         $embedHashtable.fields = @()
         foreach ($field in $this.fields) {
             $embedHashtable.fields += $field.ToHashtable()

@@ -81,7 +81,8 @@ $webhook.Send()
 
 ### `Logging.psm1` — `EryLog` / `EryISOTime`
 
-Simple timestamped message log. Pairs well with `EryMailLog` — pass `$log.GetMessage()` directly to `$mail.AddMessage()`.
+Timestamped message log with support for both text and table entries.
+Use `ReplayToMailLog()` to send the entire log (including tables) to an `EryMailLog` object.
 
 **Factory function:**
 ```powershell
@@ -95,7 +96,19 @@ $log = New-EryLog
 | `AddMessage(string)` | Append message with ISO timestamp |
 | `AddSuccessMessage(string)` | Prepends `✅ - ` |
 | `AddFailedMessage(string)` | Prepends `❌ - ` |
-| `GetMessage()` | Returns all messages joined by `\r\n` |
+| `AddTable(data)` | Append table data to the log |
+| `AddTable(data, properties)` | As above, with column selection |
+| `GetMessage()` | Returns all entries joined by `\r\n` (tables rendered as text via `Format-Table`) |
+| `ReplayToMailLog(mailLog)` | Iterates all entries and calls `AddMessage`/`AddTable` on the mail object |
+
+**Key properties:**
+
+| Property | Description |
+|----------|-------------|
+| `LogEntries` | Ordered array of `@{ type="text"\|"table"; content=... }` |
+| `MessageArray` | Computed: returns only the text entries (backward-compatible) |
+| `Message` | Computed: equivalent to `GetMessage()` (get) / `AddMessage()` (set) |
+| `AddTimeStamp` | `$true` by default — prepends ISO timestamp to messages |
 
 **`EryISOTime` — static time helpers:**
 ```powershell
@@ -106,18 +119,21 @@ $log = New-EryLog
 Get-EryISOTime -Format ms
 ```
 
-**Combined example (Log → Mail + Discord):**
+**Combined example (Log → Mail via ReplayToMailLog):**
 ```powershell
 $log  = New-EryLog
 $mail = New-EryMailLog -SmtpServer "smtp.example.com" -Recipients "user@domain.com" -From "bot@domain.com" -Subject "Backup"
 $hook = New-DiscordWebHook -HookUrl "https://discord.com/api/webhooks/..."
 
 $log.AddSuccessMessage("File copied OK")
+$log.AddTable($results, @("FileName", "Status", "Size"))
 $log.AddFailedMessage("Could not find source")
 
-$mail.AddMessage($log.GetMessage())
+# Replay log to email (text entries → AddMessage, table entries → AddTable)
+$log.ReplayToMailLog($mail)
 $mail.Send()
 
+# Discord gets the text representation (tables rendered via Format-Table)
 $hook.content = $log.GetMessage()
 $hook.Send()
 ```
