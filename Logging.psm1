@@ -30,31 +30,66 @@ class EryISOTime {
 
 class EryLog {
   # Properties
-  [array] $MessageArray = @()
+  [array]  $LogEntries = @()
   [string] $LogStart = [EryISOTime]::ms()
-  [hashtable] $Tables = @{}
-  [bool] $AddTimeStamp = $true
+  [bool]   $AddTimeStamp = $true
 
   # Hidden Property-methods
   hidden $__class_init__ = $(
-    # Add any hidden properties or methods here if needed
     $this | Add-Member -MemberType ScriptProperty -Name 'Message' -Value { # get
         return ( $this.GetMessage() )
       } -SecondValue { param ( $arg )
         $this.AddMessage($arg)
       } # set
+    $this | Add-Member -MemberType ScriptProperty -Name 'MessageArray' -Value { # get
+        return @( $this.LogEntries | Where-Object { $_.type -eq "text" } | ForEach-Object { $_.content } )
+      }
   )
   
   # Methods
   [void] AddMessage([string]$message) {
     if ($this.AddTimeStamp) { $message = [EryISOTime]::ms() + " - " + $message }
-    $this.MessageArray += $message
+    $this.LogEntries += @{ type = "text"; content = $message }
   }
+  [void] AddTable([object[]]$data) {
+    $this.LogEntries += @{ type = "table"; content = $data; properties = @() }
+  }
+  [void] AddTable([object[]]$data, [string[]]$properties) {
+    $this.LogEntries += @{ type = "table"; content = $data; properties = $properties }
+  }
+
   [string] GetMessage() {
-      return ($this.MessageArray -join "`r`n")
+    $parts = @()
+    foreach ($entry in $this.LogEntries) {
+      if ($entry.type -eq "text") {
+        $parts += $entry.content
+      } elseif ($entry.type -eq "table") {
+        if ($entry.properties -and $entry.properties.Count -gt 0) {
+          $parts += ($entry.content | Select-Object -Property $entry.properties | Format-Table -AutoSize | Out-String).Trim()
+        } else {
+          $parts += ($entry.content | Format-Table -AutoSize | Out-String).Trim()
+        }
+      }
+    }
+    return ($parts -join "`r`n")
   }
+
   [void] AddFailedMessage([string]$message)   { $this.AddMessage("❌ - " + $message) }
   [void] AddSuccessMessage([string]$message)  { $this.AddMessage("✅ - " + $message) }
+
+  [void] ReplayToMailLog([object]$mailLog) {
+    foreach ($entry in $this.LogEntries) {
+      if ($entry.type -eq "text") {
+        $mailLog.AddMessage($entry.content)
+      } elseif ($entry.type -eq "table") {
+        if ($entry.properties -and $entry.properties.Count -gt 0) {
+          $mailLog.AddTable($entry.content, $entry.properties)
+        } else {
+          $mailLog.AddTable($entry.content)
+        }
+      }
+    }
+  }
 
 } # $Logging = [EryLog]::new(); $Logging.AddMessage("Test message"); $Logging.Message
 
