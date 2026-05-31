@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Class and functions for composing and sending emails.
 .NOTES
