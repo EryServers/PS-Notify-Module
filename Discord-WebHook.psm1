@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Discord WebHook module for (Adaxes) PowerShell scripts.
 .NOTES

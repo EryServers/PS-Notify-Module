@@ -137,3 +137,11 @@ $mail.Send()
 $hook.content = $log.GetMessage()
 $hook.Send()
 ```
+
+---
+
+## Encoding Note
+
+Scripts containing Unicode characters (e.g. emoji in `Discord-WebHook.psm1`) **must be saved as UTF-8 with BOM** to be importable in PowerShell 5.1. Without the BOM, PS 5.1 reads the file as ANSI and corrupts multi-byte characters, causing parse errors.
+
+In VS Code: bottom status bar → click encoding → **Save with Encoding** → `UTF-8 with BOM`.
