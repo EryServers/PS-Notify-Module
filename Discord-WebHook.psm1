@@ -283,7 +283,9 @@ class DiscordWebHook {
     hidden [void] SendPayload([hashtable]$Payload) {
         # Write-Host "DEBUG: Invoke-WebRequest -Uri $($this.ThreadURL) -Method Post"
         # Write-Host ("DEBUG: -Body `r`n" + ($Payload | ConvertTo-Json -Depth 8))
-        Invoke-WebRequest -Uri $this.ThreadURL -Method Post -Body ($Payload | ConvertTo-Json -Depth 8) -ContentType "application/json" -UseBasicParsing
+        $json = $Payload | ConvertTo-Json -Depth 8
+        $utf8Bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
+        Invoke-WebRequest -Uri $this.ThreadURL -Method Post -Body $utf8Bytes -ContentType "application/json; charset=utf-8" -UseBasicParsing
     }
 
     [void] AddEmbed([DiscordEmbed]$embed) {

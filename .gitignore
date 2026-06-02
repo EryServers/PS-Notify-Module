@@ -1,0 +1,10 @@
+# Sensitive config and credential files
+*.json
+!*example*.json
+*.clixml
+*.ppk
+*.pfx
+*.p12
+
+.env.*.local
+.env.local
