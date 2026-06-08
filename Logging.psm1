@@ -30,6 +30,7 @@ class EryISOTime {
 
 class EryLog {
   # Properties
+  static [version] $Version = [version]"1.2.0"
   [array]  $LogEntries = @()
   [string] $LogStart = [EryISOTime]::ms()
   [bool]   $AddTimeStamp = $true
@@ -107,6 +108,24 @@ Function New-EryLog {
   #>
   Param ()
   Return [EryLog]::new()
+}
+
+Function Get-EryLogVersion {
+  <#
+  .SYNOPSIS
+      Returns the version of the EryLog class currently loaded in memory.
+  .DESCRIPTION
+      Reads the version directly from the [EryLog] type, so it reflects the
+      actual class definition in the runspace (not just the reloaded module file).
+      Useful for verifying which version is running, especially in long-lived
+      runspaces where Import-Module -Force does not redefine PowerShell classes.
+  .OUTPUTS
+      version
+  .EXAMPLE
+      Get-EryLogVersion
+  #>
+  Param ()
+  Return [EryLog]::Version
 }
 
 Function Get-EryISOTime {
